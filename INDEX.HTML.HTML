@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Poem Book - Admin Panel</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f1ea; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #5d4037; }
+        .form-box { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; background-color: #5d4037; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #795548; }
+        
+        /* Admin Section Style */
+        .admin-box { margin-top: 30px; background: #fafafa; padding: 20px; border-radius: 10px; border: 1px solid #d7ccc8; }
+        .poem-card { background: #fff8e1; padding: 15px; margin-top: 15px; border-left: 5px solid #5d4037; border-radius: 4px; }
+        #adminPanel { display: none; } /* Initially Hidden */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Digital Poem Book</h1>
+    <p style="text-align: center; color: #888;">Tomar kobita pathao, Admin bhalo lagle select korbe.</p>
+    
+    <div class="form-box">
+        <input type="text" id="poetName" placeholder="Tomar Naam">
+        <input type="text" id="poemTitle" placeholder="Kobitar Shironam">
+        <textarea id="poemContent" rows="5" placeholder="Kobita ekhane lekho..."></textarea>
+        <button id="submitBtn">Send to Admin</button>
+    </div>
+
+    <div class="admin-box">
+        <h3 style="text-align: center; color: #5d4037;">🔐 Admin Login</h3>
+        <div id="loginForm">
+            <input type="text" id="adminID" placeholder="Admin ID">
+            <input type="password" id="adminPass" placeholder="Password">
+            <button onclick="checkAdminAccess()">Login to View Poems</button>
+        </div>
+
+        <div id="adminPanel">
+            <h3 style="border-bottom: 2px solid #5d4037; padding-bottom: 5px;">Shobar Pathano Kobita:</h3>
+            <div id="displayArea"></div>
+            <button style="background: #a1887f; margin-top: 20px;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCVUenkaAOrLottQB2JfHztBpprBHE43vs",
+    authDomain: "savefolders-f37ae.firebaseapp.com",
+    projectId: "savefolders-f37ae",
+    storageBucket: "savefolders-f37ae.firebasestorage.app",
+    messagingSenderId: "823511819961",
+    appId: "1:823511819961:web:29dbc2d82ecb6089e11d68",
+    measurementId: "G-098EBPSNYM"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const poemCollection = collection(db, "poems");
+
+  // User Post Function
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const name = document.getElementById('poetName').value;
+    const title = document.getElementById('poemTitle').value;
+    const content = document.getElementById('poemContent').value;
+
+    if(name && title && content) {
+      await addDoc(poemCollection, { name, title, content, timestamp: new Date() });
+      alert("Kobita Admin-er kache pouchhe geche! DHONNOBAD.");
+      document.getElementById('poetName').value = '';
+      document.getElementById('poemTitle').value = '';
+      document.getElementById('poemContent').value = '';
+    } else {
+      alert("Shob gulo box bhoron koro!");
+    }
+  });
+
+  // Admin Access Logic
+  window.checkAdminAccess = function() {
+    const id = document.getElementById('adminID').value;
+    const pass = document.getElementById('adminPass').value;
+
+    // Tumi ja ID ar Password diyecho
+    if(id === "RAJENDRA" && pass === "9762SOUMIK") {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('adminPanel').style.display = 'block';
+        loadAdminData();
+    } else {
+        alert("Vul ID ba Password! Abar chesta koro.");
+    }
+  }
+
+  // Logout Function
+  window.logout = function() {
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('adminID').value = '';
+    document.getElementById('adminPass').value = '';
+  }
+
+  // Admin Data Loading
+  function loadAdminData() {
+    const q = query(poemCollection, orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+      const displayArea = document.getElementById('displayArea');
+      displayArea.innerHTML = '';
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        displayArea.innerHTML += `
+          <div class="poem-card">
+            <h4>${data.title}</h4>
+            <p><strong>Kobi:</strong> ${data.name}</p>
+            <p style="white-space: pre-wrap;">${data.content}</p>
+          </div>`;
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
